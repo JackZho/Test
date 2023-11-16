@@ -27,8 +27,7 @@ jobs:
         USERS: ${{ secrets.USERS }}
       run: |
         python test.py
-        
-
+      
     - name: Generate logs.txt
           run: echo "This is a test log" > logs.txt
 
