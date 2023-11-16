@@ -1,31 +1,54 @@
-name: Send Logs via Email
+name: "Sign"
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+  schedule:
+    - cron: "00 23 * * *" # 打卡时间
+
+env:
+  EMAIL_SUBJECT: "GitHub Actions Sign Workflow Logs"
 
 jobs:
-  send_logs:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.8'
 
-      - name: Run your command and capture logs
-        run: |
-          python ./test01/test.py > logs.txt
+    - name: Install depend
+      run: |
+        pip install requests
+        pip install json5
+        pip install pytz
+        pip install pycryptodome
+        pip install python-mimeparse
+        pip install postfix
 
-      - name: Send email with logs
-        uses: dawidd6/action-send-mail@v2
-        with:
-          server_address: smtp.qq.com
-          server_port: 465
-          username: 测试任务
-          password: qcxblsaegurtdghb
-          subject: 'GitHub Actions执行日志'
-          to: 2846150854@qq.com
-          from: 2846150854@qq.com
-          body: '执行日志见附件。'
-          attachments: 'logs.txt'
+    - name: Start sign
+      env:
+        USERS: ${{ secrets.USERS }}
+      run: |
+        python test.py
+
+    - name: Send logs via email
+      if: always()
+      env:
+        EMAIL_FROM: "GitHub Actions <github-actions@example.com>"
+      run: |
+        echo "Workflow logs:" >> logs.txt
+        cat /home/runner/work/_temp/*.log >> logs.txt
+        echo "" >> logs.txt
+        echo "Artifacts link:" >> logs.txt
+        echo "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" >> logs.txt
+        echo "" >> logs.txt
+        echo "Check the attached file for more details." >> logs.txt
+
+        python -m smtplib -c DebuggingServer localhost:1025 &
+        sleep 2
+        python -m smtpd_client -s smtp://localhost:1025/
+        python send_email.py ${{ env.EMAIL_HOST }} ${{ env.EMAIL_PORT }} ${{ env.EMAIL_USE_TLS }} ${{ env.EMAIL_USERNAME }} ${{ env.EMAIL_PASSWORD }} ${{ env.EMAIL_TO }} ${{ env.EMAIL_SUBJECT }}
+        kill %1
