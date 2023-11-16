@@ -1,12 +1,9 @@
-name: "Sign"
+name: Sign
 
 on:
   workflow_dispatch:
   schedule:
     - cron: "00 23 * * *" # 打卡时间
-
-env:
-  EMAIL_SUBJECT: "GitHub Actions Sign Workflow Logs"
 
 jobs:
   build:
@@ -25,8 +22,6 @@ jobs:
         pip install json5
         pip install pytz
         pip install pycryptodome
-        pip install python-mimeparse
-        pip install postfix
 
     - name: Start sign
       env:
@@ -34,21 +29,35 @@ jobs:
       run: |
         python test.py
 
-    - name: Send logs via email
-      if: always()
-      env:
-        EMAIL_FROM: "GitHub Actions <github-actions@example.com>"
+    - name: Archive Logs
       run: |
-        echo "Workflow logs:" >> logs.txt
-        cat /home/runner/work/_temp/*.log >> logs.txt
-        echo "" >> logs.txt
-        echo "Artifacts link:" >> logs.txt
-        echo "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" >> logs.txt
-        echo "" >> logs.txt
-        echo "Check the attached file for more details." >> logs.txt
+        tar cvf logs.tar.gz *.log
 
-        python -m smtplib -c DebuggingServer localhost:1025 &
-        sleep 2
-        python -m smtpd_client -s smtp://localhost:1025/
-        python send_email.py ${{ env.EMAIL_HOST }} ${{ env.EMAIL_PORT }} ${{ env.EMAIL_USE_TLS }} ${{ env.EMAIL_USERNAME }} ${{ env.EMAIL_PASSWORD }} ${{ env.EMAIL_TO }} ${{ env.EMAIL_SUBJECT }}
-        kill %1
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: logs
+        path: logs.tar.gz
+
+  download_logs_and_send_email:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download Logs
+      id: download_logs
+      uses: actions/download-artifact@v2
+      with:
+        name: logs
+        path: logs/
+
+    - name: Extract Logs
+      run: |
+        tar xvf logs.tar.gz
+
+    - name: Send Email
+      env:
+        SENDGRID_API_KEY: ${{ env.EMAIL_PASSWORD }}
+        FROM_EMAIL: ${{ env.EMAIL_TO }}
+        TO_EMAIL: ${{ env.EMAIL_TO }}
+      run: |
+        echo "Logs for the current run:" | mailx -s "GitHub Actions Logs" -a "$RUN_LOGS" ${TO_EMAIL}
