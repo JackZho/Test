@@ -56,8 +56,8 @@ jobs:
 
     - name: Send Email
       env:
-        SENDGRID_API_KEY: ${{ env.EMAIL_PASSWORD }}
-        FROM_EMAIL: ${{ env.EMAIL_TO }}
-        TO_EMAIL: ${{ env.EMAIL_TO }}
+        SENDGRID_API_KEY: ${{ .env.EMAIL_PASSWORD }}
+        FROM_EMAIL: ${{ .env.EMAIL_TO }}
+        TO_EMAIL: ${{ .env.EMAIL_TO }}
       run: |
         echo "Logs for the current run:" | mailx -s "GitHub Actions Logs" -a "$RUN_LOGS" ${TO_EMAIL}
