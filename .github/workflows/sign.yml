@@ -1,4 +1,4 @@
-name: Sign
+name: "Sign"
 
 on:
   workflow_dispatch:
@@ -22,42 +22,33 @@ jobs:
         pip install json5
         pip install pytz
         pip install pycryptodome
+        pip install smtplib
+        pip install email
+        pip install email.mime
 
     - name: Start sign
       env:
         USERS: ${{ secrets.USERS }}
       run: |
         python test.py
+        
 
-    - name: Archive Logs
-      run: |
-        tar cvf logs.tar.gz *.log
-
-    - name: Upload Artifacts
+    - name: Upload logs as artifact
       uses: actions/upload-artifact@v2
       with:
         name: logs
-        path: logs.tar.gz
+        path: logs.txt
 
-  download_logs_and_send_email:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-    - name: Download Logs
-      id: download_logs
+    - name: Download logs
       uses: actions/download-artifact@v2
       with:
         name: logs
-        path: logs/
 
-    - name: Extract Logs
+    - name: Save logs to repo
       run: |
-        tar xvf logs.tar.gz
+        mkdir -p artifacts
+        mv logs.txt artifacts/logs.txt
 
-    - name: Send Email
-      env:
-        SENDGRID_API_KEY: ${{ .env.EMAIL_PASSWORD }}
-        FROM_EMAIL: ${{ .env.EMAIL_TO }}
-        TO_EMAIL: ${{ .env.EMAIL_TO }}
+    - name: Send logs to QQ Email
       run: |
-        echo "Logs for the current run:" | mailx -s "GitHub Actions Logs" -a "$RUN_LOGS" ${TO_EMAIL}
+        python send_email.py

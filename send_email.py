@@ -1,42 +1,48 @@
-import os
 import smtplib
-from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.utils import formatdate
+from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
+from email.utils import formataddr
 
+# 发送方邮箱信息
+sender_email = "2846150854@qq.com"
+sender_name = "Jack_Test"
+sender_password = "qcxblsaegurtdghb"
 
-def send_email(host, port, use_tls, username, password, to, subject):
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = subject
-    msg['From'] = os.environ.get('EMAIL_FROM', 'GitHub Actions <github-actions@example.com>')
-    msg['To'] = to
-    msg['Date'] = formatdate(localtime=True)
+# 接收方邮箱信息
+receiver_email = "2846150854@qq.com"
+receiver_name = "测试"
 
-    msg.attach(MIMEText("Workflow logs:\n\nArtifacts link:\n\nCheck the attached file for more details.\n", 'plain'))
+# 邮件主题
+subject = "GitHub Actions Logs"
 
-    part = MIMEBase('application', "octet-stream")
-    with open('logs.txt', 'rb') as f:
-        part.set_payload(f.read())
-    encoders.encode_base64(part)
-    part.add_header('Content-Disposition', 'attachment; filename="logs.txt"')
+# 构造邮件
+message = MIMEMultipart()
+message["From"] = formataddr((sender_name, sender_email))
+message["To"] = formataddr((receiver_name, receiver_email))
+message["Subject"] = subject
 
-    msg.attach(part)
+# 邮件正文
+body = "GitHub Actions Logs"
+message.attach(MIMEText(body, "plain"))
 
-    server = smtplib.SMTP(host, port)
-    if use_tls:
-        server.starttls()
-    server.login(username, password)
-    server.sendmail(os.environ.get('EMAIL_FROM', 'GitHub Actions <github-actions@example.com>'), [to], msg.as_string())
-    server.quit()
+# 附件（logs.txt）
+attachment_path = "artifacts/logs.txt"
+attachment = MIMEApplication(open(attachment_path, "rb").read())
+attachment.add_header("Content-Disposition", "attachment", filename="logs.txt")
+message.attach(attachment)
 
+# 连接 SMTP 服务器
+smtp_server = "smtp.qq.com"
+smtp_port = 587
+server = smtplib.SMTP(smtp_server, smtp_port)
+server.starttls()
 
-if __name__ == "__main__":
-    host = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
-    port = int(os.environ.get('EMAIL_PORT', '587'))
-    use_tls = bool(os.environ.get('EMAIL_USE_TLS', 'True').lower() == 'true')
-    username = os.environ.get('EMAIL_USERNAME', 'your-gmail-address')
-    password = os.environ.get('EMAIL_PASSWORD', 'your-gmail-password')
-    to = os.environ.get('EMAIL_TO', 'your-gmail-address')
-    subject = os.environ.get('EMAIL_SUBJECT', 'GitHub Actions Log')
+# 登录邮箱
+server.login(sender_email, sender_password)
 
-    send_email(host, port, use_tls, username, password, to, subject)
+# 发送邮件
+server.sendmail(sender_email, receiver_email, message.as_string())
+
+# 关闭连接
+server.quit()
