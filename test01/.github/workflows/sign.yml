@@ -1,0 +1,30 @@
+name: Send Email
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  send_email:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Run My Script
+        run: |
+          # your script here
+
+      - name: Log Output to File
+        run: |
+          echo "$GITHUB_OUTPUT" > output.txt
+
+      - name: Set Up SMTP Server
+        uses: 'sendgrid/sendgrid-actions@v1'
+        with:
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+
+      - name: Send Email
+        run: |
+          python test.py
+          cat output.txt | mailx -s "My Email Subject" you@example.com
