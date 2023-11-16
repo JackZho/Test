@@ -15,7 +15,7 @@ jobs:
 
       - name: Run your command and capture logs
         run: |
-          python test.py
+          python ./test01/test.py
           your_command > logs.txt
 
       - name: Send email with logs
