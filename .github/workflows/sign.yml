@@ -29,7 +29,7 @@ jobs:
         python test.py
       
     - name: Generate logs.txt
-      run: echo "This is a test log" > logs.txt
+      run: cat $GITHUB_WORKSPACE/artifacts/logs.txt > logs.txt
 
     - name: Debug - Check logs.txt
       run: ls -lah logs.txt
