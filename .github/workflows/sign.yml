@@ -1,30 +1,31 @@
-name: Send Email
+name: Send Logs via Email
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
-  send_email:
+  send_logs:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Run My Script
+      - name: Run your command and capture logs
         run: |
-          # your script here
+          your_command > logs.txt
 
-      - name: Log Output to File
-        run: |
-          echo "$GITHUB_OUTPUT" > output.txt
-
-      - name: Set Up SMTP Server
-        uses: 'sendgrid/sendgrid-actions@v1'
+      - name: Send email with logs
+        uses: dawidd6/action-send-mail@v2
         with:
-          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
-
-      - name: Send Email
-        run: |
-          python test.py
-          cat output.txt | mailx -s "My Email Subject" you@example.com
+          server_address: "smtp.qq.com"
+          server_port: 465
+          username: "测试任务"
+          password: "qcxblsaegurtdghb"
+          subject: 'GitHub Actions执行日志'
+          to: 2846150854@qq.com
+          from: 2846150854@qq.com
+          body: '执行日志见附件。'
+          attachments: 'logs.txt'
