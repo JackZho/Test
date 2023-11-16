@@ -29,17 +29,17 @@ jobs:
         python test.py
       
     - name: Generate logs.txt
-          run: echo "This is a test log" > logs.txt
+      run: echo "This is a test log" > logs.txt
 
-        - name: Debug - Check logs.txt
-          run: ls -lah logs.txt
+              - name: Debug - Check logs.txt
+                run: ls -lah logs.txt
 
-        - name: Upload logs as artifact
-          uses: actions/upload-artifact@v2
-          with:
-            name: logs
-            path: logs.txt
-
+              - name: Upload logs as artifact
+                uses: actions/upload-artifact@v2
+                with:
+                  name: logs
+                  path: logs.txt
+          
     - name: Download logs
       uses: actions/download-artifact@v2
       with:
