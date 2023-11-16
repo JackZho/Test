@@ -16,7 +16,7 @@ jobs:
       with:
         python-version: '3.8'
 
-    - name: Install depend
+    - name: Install dependencies
       run: |
         pip install --upgrade pip
         pip install pytz
@@ -27,29 +27,21 @@ jobs:
         USERS: ${{ secrets.USERS }}
       run: |
         python test.py
-      
-    - name: Generate logs.txt
-      run: cat $GITHUB_WORKSPACE/artifacts/logs.txt > logs.txt
 
-    - name: Debug - Check logs.txt
-      run: ls -lah logs.txt
+    - name: Capture build logs
+      id: capture-logs
+      run: |
+        mkdir -p logs
+        # Redirect both standard output and error output to the log file
+        python test.py > logs/build.log 2>&1
 
     - name: Upload logs as artifact
       uses: actions/upload-artifact@v2
       with:
         name: logs
-        path: logs.txt
-              
-    - name: Download logs
-      uses: actions/download-artifact@v2
-      with:
-        name: logs
-
-    - name: Save logs to repo
-      run: |
-        mkdir -p artifacts
-        mv logs.txt artifacts/logs.txt
+        path: logs
 
     - name: Send logs to QQ Email
       run: |
-        python send_email.py
+        # Use your email script here, and attach the log file
+        python send_email.py logs/build.log
